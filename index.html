@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="description" content="APEX F1 — live race data, real standings, real schedule">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="APEX">
+<link rel="manifest" href="manifest.json">
+<title>APEX F1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#e8000d;--bg:#0d0d0d;--s1:#141414;--s2:#1a1a1a;--s3:#222;
+  --border:#2a2a2a;--text:#f2f2f2;--sub:#777;--faint:#3a3a3a;
+  --green:#00c853;--yellow:#ffd200;
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;--display:'Rajdhani',sans-serif;
+}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;max-width:430px;margin:0 auto;min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+button{background:none;border:none;cursor:pointer;font:inherit;color:inherit}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;position:sticky;top:0;z-index:50;background:var(--bg);border-bottom:1px solid var(--border)}
+.wordmark{font-family:var(--display);font-size:20px;font-weight:700;letter-spacing:4px;text-transform:uppercase}
+.wordmark span{color:var(--red)}
+.icon-btn{width:32px;height:32px;border-radius:5px;background:var(--s2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.icon-btn svg{width:14px;height:14px;stroke:var(--sub);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.tab-strip{display:flex;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);background:var(--bg)}
+.tab-strip::-webkit-scrollbar{display:none}
+.tab-btn{padding:11px 16px;font-family:var(--display);font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--sub);white-space:nowrap;border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+.tab-btn.active{color:var(--text);border-bottom-color:var(--red)}
+.section{display:none;padding:16px 16px 100px}
+.section.visible{display:block;animation:fadeUp .2s ease}
+.detail-view{display:none;padding:0 16px 100px;animation:fadeUp .2s ease}
+.detail-view.visible{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.back-btn{display:flex;align-items:center;gap:6px;padding:14px 0;font-family:var(--mono);font-size:10px;color:var(--sub);letter-spacing:1.5px;text-transform:uppercase}
+.back-btn svg{width:13px;height:13px;stroke:var(--sub);fill:none;stroke-width:2;stroke-linecap:round}
+.sec-label{font-family:var(--mono);font-size:9px;letter-spacing:2.5px;color:var(--sub);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.sec-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sec-title{font-family:var(--display);font-size:16px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.link-btn{font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--red);text-transform:uppercase}
+.card{background:var(--s1);border:1px solid var(--border);border-radius:7px;padding:14px;margin-bottom:14px}
+.live-pill{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--red);text-transform:uppercase;margin-bottom:10px}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--red);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.race-name-big{font-family:var(--display);font-size:19px;font-weight:700;letter-spacing:1px;margin-bottom:2px}
+.race-sub-text{font-family:var(--mono);font-size:9px;color:var(--sub);margin-bottom:12px}
+.lb-row{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:5px;background:var(--s2);margin-bottom:2px}
+.lb-pos{font-family:var(--mono);font-size:11px;color:var(--sub);width:16px;text-align:center;flex-shrink:0}
+.lb-pos.p1{color:var(--yellow)}.lb-pos.p2{color:#999}.lb-pos.p3{color:#cd7f32}
+.lb-bar{width:2px;height:26px;border-radius:1px;flex-shrink:0}
+.lb-name-block{flex:1}
+.lb-surname{font-family:var(--display);font-size:13px;font-weight:600;letter-spacing:.5px}
+.lb-team{font-family:var(--mono);font-size:9px;color:var(--sub)}
+.lb-gap{font-family:var(--mono);font-size:10px;color:var(--sub)}
+.lb-gap.leader{font-size:9px;letter-spacing:1px;color:var(--green)}
+.countdown{display:flex;gap:5px;margin-top:10px}
+.cd-unit{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:5px;padding:8px 4px;text-align:center}
+.cd-num{font-family:var(--mono);font-size:18px;font-weight:500;color:var(--text);line-height:1;display:block}
+.cd-lbl{font-family:var(--mono);font-size:8px;color:var(--faint);letter-spacing:1px;text-transform:uppercase;margin-top:2px;display:block}
+.st-list{display:flex;flex-direction:column;gap:2px;margin-bottom:14px}
+.st-row{display:flex;align-items:center;gap:10px;padding:11px 11px;background:var(--s1);border:1px solid transparent;border-radius:5px;cursor:pointer;transition:border-color .15s}
+.st-row:hover{border-color:var(--border)}
+.st-pos{font-family:var(--mono);font-size:11px;color:var(--sub);width:18px;text-align:center;flex-shrink:0}
+.st-pos.gold{color:var(--yellow);font-weight:600}.st-pos.silver{color:#aaa}.st-pos.bronze{color:#cd7f32}
+.st-bar{width:3px;height:32px;border-radius:1px;flex-shrink:0}
+.st-info{flex:1}
+.st-name{font-family:var(--display);font-size:14px;font-weight:600;letter-spacing:.5px}
+.st-team{font-family:var(--mono);font-size:9px;color:var(--sub);margin-top:1px}
+.st-right{text-align:right}
+.st-pts{font-family:var(--mono);font-size:14px;font-weight:500}
+.st-pts-lbl{font-family:var(--mono);font-size:8px;color:var(--sub);letter-spacing:1px}
+.dh-num{font-family:var(--display);font-size:56px;font-weight:700;color:var(--s3);position:absolute;right:14px;top:8px;line-height:1;letter-spacing:-2px}
+.dh-nat{font-family:var(--mono);font-size:9px;color:var(--sub);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+.dh-name{font-family:var(--display);font-size:25px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;line-height:1.1;margin-bottom:3px}
+.dh-team-lbl{font-family:var(--mono);font-size:10px;color:var(--sub);margin-bottom:14px}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.stat-box{background:var(--s2);border-radius:5px;padding:9px}
+.stat-val{font-family:var(--mono);font-size:17px;font-weight:500}
+.stat-lbl{font-family:var(--mono);font-size:8px;color:var(--sub);letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.race-row{background:var(--s1);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:5px;cursor:pointer;transition:border-color .15s;position:relative}
+.race-row.upcoming{border-color:rgba(232,0,13,.35)}
+.race-row.done{opacity:.55}
+.rr-country{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--sub);text-transform:uppercase;margin-bottom:2px}
+.rr-name{font-family:var(--display);font-size:15px;font-weight:600;letter-spacing:.5px}
+.rr-circuit{font-family:var(--mono);font-size:9px;color:var(--sub);margin-top:2px}
+.rr-date{font-family:var(--mono);font-size:9px;color:var(--faint);margin-top:3px}
+.badge{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;padding:2px 6px;border-radius:3px;text-transform:uppercase;flex-shrink:0}
+.badge-next{background:rgba(232,0,13,.1);color:var(--red)}
+.badge-done{background:var(--s2);color:var(--faint)}
+.rr-winner{display:flex;align-items:center;gap:6px;padding-top:8px;border-top:1px solid var(--border);font-family:var(--mono);font-size:9px;color:var(--sub);margin-top:8px}
+.rr-winner strong{color:var(--text);font-weight:500}
+.result-row{display:flex;align-items:center;gap:9px;padding:8px 10px;background:var(--s1);border-radius:5px;margin-bottom:2px}
+.res-pos{font-family:var(--mono);font-size:11px;width:18px;text-align:center;color:var(--sub);flex-shrink:0}
+.res-pos.p1{color:var(--yellow)}.res-pos.p2{color:#aaa}.res-pos.p3{color:#cd7f32}
+.res-name{flex:1;font-family:var(--display);font-size:13px;font-weight:600;letter-spacing:.5px}
+.res-team{font-family:var(--mono);font-size:9px;color:var(--sub)}
+.res-time{font-family:var(--mono);font-size:10px;color:var(--sub);text-align:right}
+.res-pts{font-family:var(--mono);font-size:10px;width:26px;text-align:right;color:var(--sub)}
+.team-row{background:var(--s1);border:1px solid var(--border);border-left:3px solid transparent;border-radius:6px;padding:13px;margin-bottom:5px;cursor:pointer}
+.tr-pos{font-family:var(--display);font-size:28px;font-weight:700;color:var(--s3);line-height:1}
+.tr-name{font-family:var(--display);font-size:17px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+.tr-drivers{font-family:var(--mono);font-size:9px;color:var(--sub);margin-top:2px}
+.filter-row{display:flex;gap:5px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none}
+.filter-row::-webkit-scrollbar{display:none}
+.filter-pill{font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:5px 11px;border-radius:3px;border:1px solid var(--border);color:var(--sub);white-space:nowrap;cursor:pointer;text-transform:uppercase;transition:all .15s}
+.filter-pill.active{background:var(--red);border-color:var(--red);color:#fff}
+.search-bar{display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid var(--border);border-radius:5px;padding:9px 12px;margin-bottom:11px}
+.search-bar input{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:var(--mono);font-size:11px;letter-spacing:.5px}
+.search-bar input::placeholder{color:var(--faint)}
+.search-bar svg{width:13px;height:13px;stroke:var(--faint);fill:none;stroke-width:2;stroke-linecap:round}
+.session-row{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;background:var(--s1);border:1px solid var(--border);border-radius:5px;margin-bottom:3px}
+.session-name{font-size:12px;font-weight:500}
+.session-time{font-family:var(--mono);font-size:10px;color:var(--sub)}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--bg);border-top:1px solid var(--border);display:flex;padding:10px 0;padding-bottom:max(10px,env(safe-area-inset-bottom));z-index:50}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--faint);transition:color .15s}
+.nav-btn.active{color:var(--text)}
+.nav-btn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.nav-label{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;text-transform:uppercase}
+.loading-msg{font-family:var(--mono);font-size:10px;color:var(--sub);letter-spacing:1px;padding:24px 0;text-align:center}
+.error-msg{font-family:var(--mono);font-size:10px;color:var(--red);letter-spacing:.5px;padding:14px;background:rgba(232,0,13,.06);border:1px solid rgba(232,0,13,.2);border-radius:5px;margin-bottom:12px;line-height:1.6}
+.tag{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;color:var(--sub);background:var(--s2);border:1px solid var(--border);padding:2px 6px;border-radius:3px;text-transform:uppercase}
+.nr-name{font-family:var(--display);font-size:19px;font-weight:700;letter-spacing:1px}
+.nr-circuit{font-family:var(--mono);font-size:9px;color:var(--sub);margin-top:2px;margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wordmark">APEX<span>.</span>F1</div>
+  <div class="icon-btn" id="refreshBtn" onclick="refreshAll()" title="Refresh">
+    <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+  </div>
+</header>
+
+<nav class="tab-strip">
+  <button class="tab-btn active" onclick="showTab('home',this)">Home</button>
+  <button class="tab-btn" onclick="showTab('drivers',this)">Drivers</button>
+  <button class="tab-btn" onclick="showTab('teams',this)">Teams</button>
+  <button class="tab-btn" onclick="showTab('schedule',this)">Schedule</button>
+  <button class="tab-btn" onclick="showTab('standings',this)">Standings</button>
+</nav>
+
+<main class="section visible" id="home">
+  <div id="homeLive"></div>
+  <div id="homeNext"></div>
+  <div class="sec-row">
+    <div class="sec-title">Standings</div>
+    <button class="link-btn" onclick="showTabByName('standings')">Full table</button>
+  </div>
+  <div class="st-list" id="homeStandings"><div class="loading-msg">Loading...</div></div>
+</main>
+
+<main class="section" id="drivers">
+  <div class="search-bar">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input type="text" placeholder="Search driver..." id="driverSearch" oninput="filterDriverList(this.value)">
+  </div>
+  <div class="st-list" id="driversList"><div class="loading-msg">Loading...</div></div>
+</main>
+
+<div class="detail-view" id="driverDetail">
+  <button class="back-btn" onclick="closeDetail('driverDetail','drivers')">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Back
+  </button>
+  <div id="driverHeroArea"></div>
+  <div class="sec-label" style="margin-top:14px">2025 Results</div>
+  <div id="driverSeasonResults"></div>
+</div>
+
+<main class="section" id="teams">
+  <div id="teamsList"><div class="loading-msg">Loading...</div></div>
+</main>
+
+<div class="detail-view" id="teamDetail">
+  <button class="back-btn" onclick="closeDetail('teamDetail','teams')">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Back
+  </button>
+  <div id="teamHeroArea"></div>
+  <div class="sec-label" style="margin-top:14px">Drivers</div>
+  <div id="teamDriversArea"></div>
+</div>
+
+<main class="section" id="schedule">
+  <div class="filter-row">
+    <button class="filter-pill active" onclick="filterSchedule('all',this)">All</button>
+    <button class="filter-pill" onclick="filterSchedule('upcoming',this)">Upcoming</button>
+    <button class="filter-pill" onclick="filterSchedule('done',this)">Completed</button>
+  </div>
+  <div id="scheduleList"><div class="loading-msg">Loading...</div></div>
+</main>
+
+<div class="detail-view" id="raceDetail">
+  <button class="back-btn" onclick="closeDetail('raceDetail','schedule')">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Back
+  </button>
+  <div id="raceHeroArea"></div>
+  <div class="sec-label" style="margin-top:14px">Weekend Schedule</div>
+  <div id="raceSessionsArea"></div>
+  <div class="sec-label" style="margin-top:14px">Race Result</div>
+  <div id="raceResultsArea"></div>
+</div>
+
+<main class="section" id="standings">
+  <div class="filter-row">
+    <button class="filter-pill active" onclick="switchStandings('drivers',this)">Drivers</button>
+    <button class="filter-pill" onclick="switchStandings('constructors',this)">Constructors</button>
+  </div>
+  <div class="st-list" id="fullStandings"><div class="loading-msg">Loading...</div></div>
+</main>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-home" onclick="navTo('home','nav-home')">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span class="nav-label">Home</span>
+  </button>
+  <button class="nav-btn" id="nav-drivers" onclick="navTo('drivers','nav-drivers')">
+    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span class="nav-label">Drivers</span>
+  </button>
+  <button class="nav-btn" id="nav-teams" onclick="navTo('teams','nav-teams')">
+    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+    <span class="nav-label">Teams</span>
+  </button>
+  <button class="nav-btn" id="nav-schedule" onclick="navTo('schedule','nav-schedule')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span class="nav-label">Schedule</span>
+  </button>
+  <button class="nav-btn" id="nav-standings" onclick="navTo('standings','nav-standings')">
+    <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <span class="nav-label">Standings</span>
+  </button>
+</nav>
+
+<script>
+const ERGAST = 'https://api.jolpi.ca/ergast/f1'
+const OPENF1 = 'https://api.openf1.org/v1'
+
+const TEAM_COLORS = {
+  'ferrari':'#e8000d','mclaren':'#ff8000','red_bull':'#3671c6','mercedes':'#27f4d2',
+  'aston_martin':'#358c75','williams':'#64c4ff','haas':'#b6babd','alpine':'#ff87bc',
+  'sauber':'#52e2f8','rb':'#6692ff','kick_sauber':'#52e2f8',
+  'Ferrari':'#e8000d','McLaren':'#ff8000','Red Bull Racing':'#3671c6','Red Bull':'#3671c6',
+  'Mercedes':'#27f4d2','Aston Martin':'#358c75','Williams':'#64c4ff','Haas F1 Team':'#b6babd',
+  'Haas':'#b6babd','Alpine F1 Team':'#ff87bc','Alpine':'#ff87bc','Kick Sauber':'#52e2f8',
+  'Sauber':'#52e2f8','RB F1 Team':'#6692ff','Racing Bulls':'#6692ff','VCARB':'#6692ff',
+}
+
+function teamColor(name) {
+  if (!name) return '#555'
+  for (const [k,v] of Object.entries(TEAM_COLORS)) {
+    if (name.toLowerCase().includes(k.toLowerCase())) return v
+  }
+  return '#555'
+}
+
+function posLabel(p) { return p==1?'gold':p==2?'silver':p==3?'bronze':'' }
+function posClass(p) { return p==1?'p1':p==2?'p2':p==3?'p3':'' }
+function pad(n) { return String(n).padStart(2,'0') }
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  return new Date(dateStr+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})
+}
+
+// ── STATE ──────────────────────────────────────────────────────────────────────
+const S = {
+  driverStandings:[],constructorStandings:[],schedule:[],
+  liveSession:null,livePositions:[],liveDrivers:[],
+  nextRace:null,raceResultsCache:{},standingsMode:'drivers',scheduleFilter:'all'
+}
+
+// ── FETCH ──────────────────────────────────────────────────────────────────────
+async function fetchJSON(url) {
+  const r = await fetch(url)
+  if (!r.ok) throw new Error(`HTTP ${r.status}`)
+  return r.json()
+}
+
+// ── LOADERS ────────────────────────────────────────────────────────────────────
+async function loadDriverStandings() {
+  const d = await fetchJSON(`${ERGAST}/current/driverStandings.json`)
+  const list = d?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings ?? []
+  S.driverStandings = list.map(e => ({
+    pos: +e.position, id: e.Driver.driverId,
+    firstName: e.Driver.givenName, lastName: e.Driver.familyName,
+    code: e.Driver.code, num: e.Driver.permanentNumber,
+    nat: e.Driver.nationality, team: e.Constructors?.[0]?.name ?? '',
+    teamId: e.Constructors?.[0]?.constructorId ?? '',
+    pts: +e.points, wins: +e.wins,
+  }))
+}
+
+async function loadConstructorStandings() {
+  const d = await fetchJSON(`${ERGAST}/current/constructorStandings.json`)
+  const list = d?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings ?? []
+  S.constructorStandings = list.map(e => ({
+    pos:+e.position, id:e.Constructor.constructorId,
+    name:e.Constructor.name, nat:e.Constructor.nationality,
+    pts:+e.points, wins:+e.wins,
+  }))
+}
+
+async function loadSchedule() {
+  const d = await fetchJSON(`${ERGAST}/current.json?limit=30`)
+  const now = new Date()
+  S.schedule = (d?.MRData?.RaceTable?.Races??[]).map(r => {
+    const raceDate = new Date(r.date+'T'+(r.time||'14:00:00'))
+    const s = []
+    if(r.FirstPractice)  s.push({name:'Practice 1', date:r.FirstPractice.date,  time:(r.FirstPractice.time||'').slice(0,5)})
+    if(r.SecondPractice) s.push({name:'Practice 2', date:r.SecondPractice.date, time:(r.SecondPractice.time||'').slice(0,5)})
+    if(r.ThirdPractice)  s.push({name:'Practice 3', date:r.ThirdPractice.date,  time:(r.ThirdPractice.time||'').slice(0,5)})
+    if(r.Sprint)         s.push({name:'Sprint',     date:r.Sprint.date,         time:(r.Sprint.time||'').slice(0,5)})
+    if(r.Qualifying)     s.push({name:'Qualifying', date:r.Qualifying.date,     time:(r.Qualifying.time||'').slice(0,5)})
+    s.push({name:'Race', date:r.date, time:(r.time||'').slice(0,5)})
+    return { round:+r.round, name:r.raceName, country:r.Circuit.Location.country,
+      locality:r.Circuit.Location.locality, circuit:r.Circuit.circuitName,
+      date:r.date, raceDate, done:raceDate<now, season:r.season, sessions:s }
+  })
+  const next = S.schedule.find(r=>!r.done)
+  if(next) next.isNext = true
+  S.nextRace = next ?? null
+}
+
+async function loadRaceResults(season, round) {
+  const key = `${season}-${round}`
+  if(S.raceResultsCache[key]) return S.raceResultsCache[key]
+  const d = await fetchJSON(`${ERGAST}/${season}/${round}/results.json`)
+  const r = (d?.MRData?.RaceTable?.Races?.[0]?.Results??[]).map(r=>({
+    pos:+r.position, name:r.Driver.givenName[0]+'. '+r.Driver.familyName,
+    team:r.Constructor.name, time:r.Time?.time??r.status??'DNF',
+    pts:+r.points, fastest:r.FastestLap?.rank==='1',
+  }))
+  S.raceResultsCache[key]=r; return r
+}
+
+async function loadLive() {
+  try {
+    const sessions = await fetchJSON(`${OPENF1}/sessions?session_key=latest`)
+    S.liveSession = sessions?.[0]??null
+    if(!S.liveSession) return
+    const [pos,drivers] = await Promise.all([
+      fetchJSON(`${OPENF1}/position?session_key=${S.liveSession.session_key}`),
+      fetchJSON(`${OPENF1}/drivers?session_key=${S.liveSession.session_key}`)
+    ])
+    const latest = new Map()
+    for(const p of pos){const ex=latest.get(p.driver_number);if(!ex||new Date(p.date)>new Date(ex.date))latest.set(p.driver_number,p)}
+    S.livePositions = [...latest.values()].sort((a,b)=>a.position-b.position)
+    S.liveDrivers = drivers
+  } catch(e){ S.liveSession=null }
+}
+
+// ── RENDERS ────────────────────────────────────────────────────────────────────
+function stRow(d, click=false) {
+  const color = teamColor(d.team||d.teamId||'')
+  const oc = click?`onclick="openDriverDetail('${d.id}')"`:''
+  return `<div class="st-row" ${oc}>
+    <div class="st-pos ${posLabel(d.pos)}">${d.pos}</div>
+    <div class="st-bar" style="background:${color}"></div>
+    <div class="st-info"><div class="st-name">${d.lastName}</div><div class="st-team">${d.team}</div></div>
+    <div class="st-right"><div class="st-pts">${d.pts}</div><div class="st-pts-lbl">PTS</div></div>
+  </div>`
+}
+
+function renderHome() {
+  // Live
+  const liveEl = document.getElementById('homeLive')
+  const s = S.liveSession
+  const isLive = s && s.status === 'started'
+  if(isLive && S.livePositions.length) {
+    const dmap = {}; for(const d of S.liveDrivers) dmap[d.driver_number]=d
+    const rows = S.livePositions.slice(0,5).map(p=>{
+      const d=dmap[p.driver_number]??{}
+      const color=d.team_colour?'#'+d.team_colour:'#555'
+      const surname=(d.full_name??'').split(' ').pop()||`#${p.driver_number}`
+      return `<div class="lb-row">
+        <div class="lb-pos ${posClass(p.position)}">${p.position}</div>
+        <div class="lb-bar" style="background:${color}"></div>
+        <div class="lb-name-block"><div class="lb-surname">${surname}</div><div class="lb-team">${d.team_name??''}</div></div>
+        <div class="lb-gap ${p.position===1?'leader':''}">${p.position===1?'LEADER':''}</div>
+      </div>`
+    }).join('')
+    liveEl.innerHTML = `<div class="card" style="border-left:3px solid var(--red);margin-bottom:14px">
+      <div class="live-pill"><div class="live-dot"></div> Live — ${s.session_name}</div>
+      <div class="race-name-big">${s.location}</div>
+      <div class="race-sub-text">${s.circuit_short_name}</div>
+      ${rows}
+    </div>`
+  } else { liveEl.innerHTML='' }
+
+  // Next race
+  const nextEl = document.getElementById('homeNext')
+  const nr = S.nextRace
+  if(nr) {
+    const target = new Date(nr.date+'T'+(nr.raceDate.toISOString().slice(11,19)||'14:00:00'))
+    nextEl.innerHTML = `<div class="sec-label">Next Race</div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div><div class="nr-name">${nr.name}</div><div class="nr-circuit">${nr.circuit} · ${nr.locality}</div></div>
+        <div class="tag">R${pad(nr.round)}</div>
+      </div>
+      <div class="countdown">
+        <div class="cd-unit"><span class="cd-num" id="cd-d">--</span><span class="cd-lbl">Days</span></div>
+        <div class="cd-unit"><span class="cd-num" id="cd-h">--</span><span class="cd-lbl">Hrs</span></div>
+        <div class="cd-unit"><span class="cd-num" id="cd-m">--</span><span class="cd-lbl">Min</span></div>
+        <div class="cd-unit"><span class="cd-num" id="cd-s">--</span><span class="cd-lbl">Sec</span></div>
+      </div>
+    </div>`
+    startCountdown(nr.raceDate)
+  } else { nextEl.innerHTML='' }
+
+  // Standings preview
+  document.getElementById('homeStandings').innerHTML =
+    S.driverStandings.slice(0,5).map(d=>stRow(d,true)).join('') || '<div class="loading-msg">Loading...</div>'
+}
+
+function renderDriversList(q='') {
+  const f = S.driverStandings.filter(d=>!q||
+    d.lastName.toLowerCase().includes(q.toLowerCase())||
+    d.firstName.toLowerCase().includes(q.toLowerCase()))
+  document.getElementById('driversList').innerHTML = f.map(d=>stRow(d,true)).join('')||'<div class="loading-msg">No results</div>'
+}
+
+function filterDriverList(q){renderDriversList(q)}
+
+async function openDriverDetail(id) {
+  const d = S.driverStandings.find(x=>x.id===id); if(!d) return
+  hideAll()
+  const color = teamColor(d.team)
+  document.getElementById('driverHeroArea').innerHTML = `
+    <div class="card" style="position:relative;overflow:hidden;border-top:3px solid ${color}">
+      <div class="dh-num">${d.num||''}</div>
+      <div class="dh-nat">${d.nat}</div>
+      <div class="dh-name">${d.firstName}<br>${d.lastName}</div>
+      <div class="dh-team-lbl">${d.team}</div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-val">${d.pts}</div><div class="stat-lbl">Points</div></div>
+        <div class="stat-box"><div class="stat-val">${d.wins}</div><div class="stat-lbl">Wins</div></div>
+        <div class="stat-box"><div class="stat-val">P${d.pos}</div><div class="stat-lbl">Standing</div></div>
+        <div class="stat-box"><div class="stat-val">#${d.num||'—'}</div><div class="stat-lbl">Number</div></div>
+        <div class="stat-box"><div class="stat-val">${d.code||'—'}</div><div class="stat-lbl">Code</div></div>
+        <div class="stat-box"><div class="stat-val" style="font-size:12px">${d.nat}</div><div class="stat-lbl">Nationality</div></div>
+      </div>
+    </div>`
+  document.getElementById('driverSeasonResults').innerHTML='<div class="loading-msg">Loading...</div>'
+  document.getElementById('driverDetail').classList.add('visible')
+  window.scrollTo(0,0)
+  try {
+    const data = await fetchJSON(`${ERGAST}/current/drivers/${id}/results.json?limit=30`)
+    const races = data?.MRData?.RaceTable?.Races??[]
+    document.getElementById('driverSeasonResults').innerHTML = races.length
+      ? races.map(r=>{
+          const res=r.Results?.[0]; if(!res) return ''
+          const p=+res.position
+          return `<div class="result-row">
+            <div class="res-pos ${posClass(p)}">${p<=20?p:'DNF'}</div>
+            <div style="flex:1"><div class="res-name">${r.raceName.replace(' Grand Prix','').replace(' GP','')}</div><div class="res-team">${formatDate(r.date)}</div></div>
+            <div class="res-time">${res.Time?.time??res.status??'—'}</div>
+            <div class="res-pts">${res.points}p</div>
+          </div>`
+        }).join('')
+      : '<div class="loading-msg">No results yet this season</div>'
+  } catch(e){ document.getElementById('driverSeasonResults').innerHTML='<div class="error-msg">Could not load results</div>' }
+}
+
+function renderTeamsList() {
+  document.getElementById('teamsList').innerHTML = S.constructorStandings.map(t=>{
+    const color=teamColor(t.name)
+    const drivers=S.driverStandings.filter(d=>teamColor(d.team)===color||d.teamId===t.id)
+    return `<div class="team-row" style="border-left-color:${color}" onclick="openTeamDetail('${t.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="tr-pos">${t.pos}</div>
+        <div style="text-align:right"><div style="font-family:var(--mono);font-size:16px;font-weight:500">${t.pts}</div><div style="font-family:var(--mono);font-size:8px;color:var(--sub);letter-spacing:1px">PTS</div></div>
+      </div>
+      <div class="tr-name">${t.name}</div>
+      <div class="tr-drivers">${drivers.map(d=>d.lastName).join(' · ')||t.nat}</div>
+    </div>`
+  }).join('')||'<div class="loading-msg">Loading...</div>'
+}
+
+function openTeamDetail(id) {
+  const t=S.constructorStandings.find(x=>x.id===id); if(!t) return
+  hideAll()
+  const color=teamColor(t.name)
+  const drivers=S.driverStandings.filter(d=>teamColor(d.team)===color||d.teamId===t.id)
+  document.getElementById('teamHeroArea').innerHTML=`
+    <div class="card" style="border-top:3px solid ${color}">
+      <div class="dh-name" style="font-size:22px">${t.name}</div>
+      <div class="dh-team-lbl" style="margin-bottom:14px">${t.nat}</div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-val">${t.pts}</div><div class="stat-lbl">Points</div></div>
+        <div class="stat-box"><div class="stat-val">${t.wins}</div><div class="stat-lbl">Wins</div></div>
+        <div class="stat-box"><div class="stat-val">P${t.pos}</div><div class="stat-lbl">Standing</div></div>
+      </div>
+    </div>`
+  document.getElementById('teamDriversArea').innerHTML=drivers.map(d=>stRow(d,true)).join('')
+    ||'<div class="loading-msg">No driver data</div>'
+  document.getElementById('teamDetail').classList.add('visible')
+  window.scrollTo(0,0)
+}
+
+function renderSchedule() {
+  const f=S.scheduleFilter
+  const list=S.schedule.filter(r=>f==='upcoming'?!r.done:f==='done'?r.done:true)
+  document.getElementById('scheduleList').innerHTML=list.map(r=>`
+    <div class="race-row ${r.done?'done':''} ${r.isNext?'upcoming':''}" onclick="openRaceDetail(${r.round})">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+          <div class="rr-country">${r.country} · R${pad(r.round)}</div>
+          <div class="rr-name">${r.name}</div>
+          <div class="rr-circuit">${r.circuit}</div>
+          <div class="rr-date">${formatDate(r.date)}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          ${r.isNext?'<span class="badge badge-next">Next</span>':''}
+          ${r.done?'<span class="badge badge-done">Done</span>':''}
+        </div>
+      </div>
+    </div>`).join('')||'<div class="loading-msg">No races</div>'
+}
+
+function filterSchedule(f,btn){
+  S.scheduleFilter=f
+  document.querySelectorAll('#schedule .filter-pill').forEach(p=>p.classList.remove('active'))
+  btn.classList.add('active')
+  renderSchedule()
+}
+
+async function openRaceDetail(round) {
+  const r=S.schedule.find(x=>x.round===round); if(!r) return
+  hideAll()
+  document.getElementById('raceHeroArea').innerHTML=`
+    <div class="card" style="border-top:3px solid var(--red)">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--sub);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">${r.country} · Round ${r.round}/${S.schedule.length}</div>
+      <div class="dh-name" style="font-size:22px">${r.name}</div>
+      <div class="dh-team-lbl">${r.circuit} · ${formatDate(r.date)}</div>
+    </div>`
+  document.getElementById('raceSessionsArea').innerHTML=(r.sessions||[]).map(s=>`
+    <div class="session-row">
+      <div class="session-name">${s.name}</div>
+      <div class="session-time">${formatDate(s.date)} ${s.time?s.time+' UTC':''}</div>
+    </div>`).join('')
+  const resEl=document.getElementById('raceResultsArea')
+  if(r.done){
+    resEl.innerHTML='<div class="loading-msg">Loading...</div>'
+    try{
+      const results=await loadRaceResults(r.season,r.round)
+      resEl.innerHTML=results.map(res=>`
+        <div class="result-row">
+          <div class="res-pos ${posClass(res.pos)}">${res.pos<=20?res.pos:'DNF'}</div>
+          <div style="flex:1"><div class="res-name">${res.name}</div><div class="res-team">${res.team}</div></div>
+          <div class="res-time">${res.time}</div>
+          <div class="res-pts">${res.pts}p</div>
+        </div>`).join('')
+    }catch(e){resEl.innerHTML='<div class="error-msg">Could not load results</div>'}
+  }else{resEl.innerHTML='<div class="loading-msg">Race not yet run</div>'}
+  document.getElementById('raceDetail').classList.add('visible')
+  window.scrollTo(0,0)
+}
+
+function renderFullStandings(){
+  const el=document.getElementById('fullStandings')
+  if(S.standingsMode==='drivers'){
+    el.innerHTML=S.driverStandings.map(d=>stRow(d,true)).join('')||'<div class="loading-msg">Loading...</div>'
+  }else{
+    el.innerHTML=S.constructorStandings.map(t=>{
+      const color=teamColor(t.name)
+      return `<div class="st-row" onclick="openTeamDetail('${t.id}')">
+        <div class="st-pos ${posLabel(t.pos)}">${t.pos}</div>
+        <div class="st-bar" style="background:${color}"></div>
+        <div class="st-info"><div class="st-name">${t.name}</div><div class="st-team">${t.nat}</div></div>
+        <div class="st-right"><div class="st-pts">${t.pts}</div><div class="st-pts-lbl">PTS</div></div>
+      </div>`
+    }).join('')||'<div class="loading-msg">Loading...</div>'
+  }
+}
+
+function switchStandings(mode,btn){
+  S.standingsMode=mode
+  document.querySelectorAll('#standings .filter-pill').forEach(p=>p.classList.remove('active'))
+  btn.classList.add('active')
+  renderFullStandings()
+}
+
+// ── COUNTDOWN ──────────────────────────────────────────────────────────────────
+let cdInterval=null
+function startCountdown(target){
+  if(cdInterval) clearInterval(cdInterval)
+  function tick(){
+    const diff=target-Date.now(); if(diff<=0){clearInterval(cdInterval);return}
+    const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=pad(v)}
+    set('cd-d',Math.floor(diff/86400000))
+    set('cd-h',Math.floor(diff%86400000/3600000))
+    set('cd-m',Math.floor(diff%3600000/60000))
+    set('cd-s',Math.floor(diff%60000/1000))
+  }
+  tick(); cdInterval=setInterval(tick,1000)
+}
+
+// ── NAV ────────────────────────────────────────────────────────────────────────
+function hideAll(){ document.querySelectorAll('.section,.detail-view').forEach(s=>s.classList.remove('visible')) }
+
+function showTab(id,btn){
+  hideAll()
+  document.querySelectorAll('.tab-btn,.nav-btn').forEach(b=>b.classList.remove('active'))
+  document.getElementById(id).classList.add('visible')
+  btn.classList.add('active')
+  const nm={home:'nav-home',drivers:'nav-drivers',teams:'nav-teams',schedule:'nav-schedule',standings:'nav-standings'}
+  document.getElementById(nm[id])?.classList.add('active')
+  window.scrollTo(0,0)
+}
+
+function showTabByName(id){
+  const btn=document.querySelector(`[onclick="showTab('${id}',this)"]`)
+  if(btn) showTab(id,btn)
+}
+
+function navTo(id,navId){
+  hideAll()
+  document.querySelectorAll('.nav-btn,.tab-btn').forEach(b=>b.classList.remove('active'))
+  document.getElementById(id).classList.add('visible')
+  document.getElementById(navId).classList.add('active')
+  document.querySelector(`[onclick="showTab('${id}',this)"]`)?.classList.add('active')
+  window.scrollTo(0,0)
+}
+
+function closeDetail(detailId,returnTab){
+  document.getElementById(detailId).classList.remove('visible')
+  navTo(returnTab,'nav-'+returnTab)
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────────
+async function init(){
+  try{
+    await Promise.all([loadDriverStandings(),loadConstructorStandings(),loadSchedule()])
+    renderHome(); renderDriversList(); renderTeamsList(); renderSchedule(); renderFullStandings()
+    // Live data in background
+    await loadLive()
+    renderHome()
+    // Auto-refresh live every 30s during active session
+    if(S.liveSession?.status==='started'){
+      setInterval(async()=>{ await loadLive(); renderHome() },30000)
+    }
+  }catch(e){
+    console.error(e)
+    document.getElementById('homeStandings').innerHTML=
+      `<div class="error-msg">Could not load data. The F1 API may be temporarily down — tap the refresh button to try again.</div>`
+  }
+}
+
+async function refreshAll(){
+  const btn=document.getElementById('refreshBtn')
+  btn.style.opacity='.4'
+  S.raceResultsCache={}
+  await init()
+  btn.style.opacity='1'
+}
+
+init()
+</script>
+</body>
+</html>
