@@ -2,7 +2,7 @@
 
 > The open-source F1 companion app — live races, standings, driver profiles, team history & more.
 
-**Live demo:** `https://YOUR_USERNAME.github.io/apexf1`
+**Live demo:** `https://raw3t.github.io/apexf1proto`
 
 ---
 
